@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title data-i18n="meta.adminTitle">Admin Panel · MetalFrame Studio</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="css/styles.css" />
+	<style>
+		main { padding-top: 28px; }
+		.admin { padding: 56px 0; }
+		.admin .grid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 28px; }
+		@media (max-width: 960px) { .admin .grid { grid-template-columns: 1fr; } }
+		.table { width: 100%; border-collapse: collapse; background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; overflow: hidden; }
+		.table th, .table td { padding: 12px 14px; text-align: left; border-bottom: 1px solid rgba(255,255,255,.08); vertical-align: top; }
+		.table th { color: var(--muted); font-weight: 600; }
+		.table tr:last-child td { border-bottom: none; }
+		.badge { display: inline-block; padding: 2px 8px; border-radius: 999px; border: 1px solid rgba(255,255,255,.14); color: var(--muted); font-size: .85rem; }
+		.actions { display: flex; gap: 8px; }
+		.actions .btn { padding: 8px 12px; }
+		.preview { width: 120px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); }
+		.header-note { color: var(--muted); font-size: .95rem; margin: 6px 0 0; }
+	</style>
+</head>
+<body>
+	<header class="site-header">
+		<div class="container header-inner">
+			<a href="/index.html" class="brand" aria-label="MetalFrame Studio home">MetalFrame<span>Studio</span></a>
+			<!-- Admin nav links removed as unused -->
+		</div>
+	</header>
+
+	<main class="admin">
+		<div class="container">
+			<h3 data-i18n="admin.title">Admin Panel</h3>
+			<p class="header-note" data-i18n="admin.note">Use this page to create, edit, and delete posts. Share this URL only with authorized users.</p>
+			<div class="grid">
+				<section id="create" class="card-area">
+					<h4 data-i18n="admin.form.createEdit">Create / Edit Post</h4>
+					<form id="postForm" class="contact-form" enctype="multipart/form-data">
+						<input type="hidden" id="postId" name="id" />
+						<div class="field">
+							<label for="image" data-i18n="admin.form.image">Image</label>
+							<input type="file" id="image" name="image" accept="image/*" />
+							<p class="error" data-error-for="image"></p>
+						</div>
+						<div class="field">
+							<label for="title" data-i18n="admin.form.title">Title</label>
+							<input type="text" id="title" name="title" placeholder="Project title" data-i18n-attr="placeholder" data-i18n="admin.form.title" required />
+							<p class="error" data-error-for="title"></p>
+						</div>
+						<div class="field">
+							<label for="description" data-i18n="admin.form.desc">Description</label>
+							<textarea id="description" name="description" rows="4" placeholder="Short description" data-i18n-attr="placeholder" data-i18n="admin.form.desc" required></textarea>
+							<p class="error" data-error-for="description"></p>
+						</div>
+					<div class="btn-row">
+						<button type="submit" class="btn" id="submitBtn" data-i18n="admin.form.create">Create Post</button>
+						<button type="button" class="btn" id="resetBtn" data-i18n="admin.form.reset">Reset</button>
+					</div>
+						<p class="form-status" role="status" aria-live="polite"></p>
+					</form>
+				</section>
+				<section id="posts">
+					<h4 data-i18n="admin.table.all">All Posts</h4>
+					<div style="overflow:auto;">
+						<table class="table" id="postsTable">
+							<thead>
+								<tr>
+									<th>Preview</th>
+									<th data-i18n="admin.form.title">Title</th>
+									<th data-i18n="admin.form.desc">Description</th>
+									<th data-i18n="admin.form.created">Created</th>
+									<th data-i18n="admin.form.actions">Actions</th>
+								</tr>
+							</thead>
+							<tbody></tbody>
+						</table>
+					</div>
+				</section>
+			</div>
+		</div>
+	</main>
+
+	<script src="js/i18n.js"></script>
+	<script src="js/admin.js"></script>
+</body>
+</html>
+
+
