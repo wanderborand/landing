@@ -46,16 +46,18 @@
 							<input type="file" id="image" name="image" accept="image/*" />
 							<p class="error" data-error-for="image"></p>
 						</div>
-						<div class="field">
-							<label for="title" data-i18n="admin.form.title">Title</label>
-							<input type="text" id="title" name="title" placeholder="Project title" data-i18n-attr="placeholder" data-i18n="admin.form.title" required />
-							<p class="error" data-error-for="title"></p>
-						</div>
-						<div class="field">
-							<label for="description" data-i18n="admin.form.desc">Description</label>
-							<textarea id="description" name="description" rows="4" placeholder="Short description" data-i18n-attr="placeholder" data-i18n="admin.form.desc" required></textarea>
-							<p class="error" data-error-for="description"></p>
-						</div>
+                        <div class="field">
+                            <label data-i18n="admin.form.title">Title</label>
+                            <input type="text" id="title_en" name="title_en" placeholder="Project title (EN)" required />
+                            <input type="text" id="title_uk" name="title_uk" placeholder="Заголовок (UK)" required style="margin-top:8px;" />
+                            <p class="error" data-error-for="title"></p>
+                        </div>
+                        <div class="field">
+                            <label data-i18n="admin.form.desc">Description</label>
+                            <textarea id="description_en" name="description_en" rows="3" placeholder="Short description (EN)" required></textarea>
+                            <textarea id="description_uk" name="description_uk" rows="3" placeholder="Короткий опис (UK)" required style="margin-top:8px;"></textarea>
+                            <p class="error" data-error-for="description"></p>
+                        </div>
 					<div class="btn-row">
 						<button type="submit" class="btn" id="submitBtn" data-i18n="admin.form.create">Create Post</button>
 						<button type="button" class="btn" id="resetBtn" data-i18n="admin.form.reset">Reset</button>

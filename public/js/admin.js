@@ -38,7 +38,7 @@
 	}
 
 	function clearErrors() {
-		['image','title','description'].forEach(id => setError(id, ''));
+        ['image','title','description'].forEach(id => setError(id, ''));
 		if (statusEl) statusEl.textContent = '';
 	}
 
@@ -62,10 +62,10 @@
 		}
 		for (const p of posts) {
 			const tr = document.createElement('tr');
-			tr.innerHTML = `
-				<td><img class="preview" src="${p.imageUrl}" alt="${p.title}" /></td>
-				<td>${escapeHtml(p.title)}</td>
-				<td>${escapeHtml(p.description)}</td>
+            tr.innerHTML = `
+                <td><img class="preview" src="${p.imageUrl}" alt="${escapeHtml(selectLang(p.title))}" /></td>
+                <td>${escapeHtml(selectLang(p.title))}</td>
+                <td>${escapeHtml(selectLang(p.description))}</td>
 				<td><span class="badge">${new Date(p.createdAt || p.updatedAt || Date.now()).toLocaleString()}</span></td>
 				<td>
 					<div class="actions">
@@ -78,7 +78,15 @@
 		}
 	}
 
-	function escapeHtml(str) {
+        function selectLang(value) {
+            const lang = (window.i18n?.getLanguage && window.i18n.getLanguage()) || 'en';
+            if (value && typeof value === 'object' && (value.en || value.uk)) {
+                return value[lang] || value.en || value.uk || '';
+            }
+            return value ?? '';
+        }
+
+        function escapeHtml(str) {
 		return String(str)
 			.replace(/&/g, '&amp;')
 			.replace(/</g, '&lt;')
@@ -112,16 +120,19 @@
 	form?.addEventListener('submit', async (e) => {
 		e.preventDefault();
 		clearErrors();
-		const formData = new FormData(form);
+        const formData = new FormData(form);
 		const isEdit = Boolean(idInput.value);
 		try {
 			let res;
 			if (storageMode === 'api') {
 				if (isEdit) {
-					res = await fetch(`${API_BASE}/api/posts/${encodeURIComponent(idInput.value)}`, { method: 'PUT', body: formData });
+                    // Re-map to localized fields JSON for API
+                    const body = await buildApiBodyFromForm(formData, true);
+                    res = await fetch(`${API_BASE}/api/posts/${encodeURIComponent(idInput.value)}`, { method: 'PUT', body: body });
 				} else {
-					if (!formData.get('image')) { setError('image', (window.i18n?.t('admin.table.needImage') || 'Please choose an image')); return; }
-					res = await fetch(`${API_BASE}/api/posts`, { method: 'POST', body: formData });
+                    if (!formData.get('image')) { setError('image', (window.i18n?.t('admin.table.needImage') || 'Please choose an image')); return; }
+                    const body = await buildApiBodyFromForm(formData, false);
+                    res = await fetch(`${API_BASE}/api/posts`, { method: 'POST', body: body });
 				}
 				const data = await res.json();
 				if (!res.ok) throw new Error(data?.error || (window.i18n?.t('admin.table.submitFail') || 'Request failed'));
@@ -130,10 +141,16 @@
 				await load();
 			} else {
 				// Local fallback create/update
-				const title = formData.get('title')?.toString().trim();
-				const description = formData.get('description')?.toString().trim();
-				if (!title) { setError('title', (window.i18n?.t('admin.table.needTitle') || 'Please enter a title')); return; }
-				if (!description) { setError('description', (window.i18n?.t('admin.table.needDesc') || 'Please enter a description')); return; }
+                const title = {
+                    en: formData.get('title_en')?.toString().trim(),
+                    uk: formData.get('title_uk')?.toString().trim()
+                };
+                const description = {
+                    en: formData.get('description_en')?.toString().trim(),
+                    uk: formData.get('description_uk')?.toString().trim()
+                };
+                if (!title.en || !title.uk) { setError('title', (window.i18n?.t('admin.table.needTitle') || 'Please enter a title')); return; }
+                if (!description.en || !description.uk) { setError('description', (window.i18n?.t('admin.table.needDesc') || 'Please enter a description')); return; }
 				const posts = getLocalPosts();
 				if (isEdit) {
 					const id = String(idInput.value);
@@ -144,14 +161,14 @@
 					if (file && file.size) {
 						imageUrl = await fileToDataURL(file);
 					}
-					posts[idx] = { ...posts[idx], title, description, imageUrl, updatedAt: new Date().toISOString() };
+                    posts[idx] = { ...posts[idx], title, description, imageUrl, updatedAt: new Date().toISOString() };
 					saveLocalPosts(posts);
 					statusEl.textContent = (window.i18n?.t('admin.table.localUpdated') || 'Post updated (local).');
 				} else {
 					const file = formData.get('image');
 					if (!file || !file.size) { setError('image', (window.i18n?.t('admin.table.needImage') || 'Please choose an image')); return; }
 					const imageUrl = await fileToDataURL(file);
-					const post = { id: nextLocalId(posts), title, description, imageUrl, createdAt: new Date().toISOString() };
+                    const post = { id: nextLocalId(posts), title, description, imageUrl, createdAt: new Date().toISOString() };
 					posts.unshift(post);
 					saveLocalPosts(posts);
 					statusEl.textContent = (window.i18n?.t('admin.table.localCreated') || 'Post created (local).');
@@ -192,9 +209,11 @@
 				const posts = await fetchPosts();
 				const post = posts.find(p => String(p.id) === String(id));
 				if (!post) return;
-				idInput.value = post.id;
-				document.getElementById('title').value = post.title;
-				document.getElementById('description').value = post.description;
+                idInput.value = post.id;
+                document.getElementById('title_en').value = (post.title?.en ?? post.title ?? '');
+                document.getElementById('title_uk').value = (post.title?.uk ?? post.title ?? '');
+                document.getElementById('description_en').value = (post.description?.en ?? post.description ?? '');
+                document.getElementById('description_uk').value = (post.description?.uk ?? post.description ?? '');
 				submitBtn.textContent = (window.i18n?.t('admin.form.update') || 'Update Post');
 				document.getElementById('image').value = '';
 				statusEl.textContent = storageMode === 'local' ? (window.i18n?.t('admin.table.editingLocal') || 'Editing (local): choose a new image to replace.') : (window.i18n?.t('admin.table.editing') || 'Editing mode: choose a new image to replace.');
@@ -204,6 +223,34 @@
 	});
 
 	load();
+
+	// Update table text when language changes
+	window.addEventListener('i18n:languageChanged', async () => {
+		try {
+			const posts = await fetchPosts();
+			renderPosts(posts);
+		} catch {}
+	});
+
+    async function buildApiBodyFromForm(formData, isEdit) {
+        // Build FormData -> fields with localized title/description retained
+        const body = new FormData();
+        const title = {
+            en: formData.get('title_en')?.toString().trim(),
+            uk: formData.get('title_uk')?.toString().trim()
+        };
+        const description = {
+            en: formData.get('description_en')?.toString().trim(),
+            uk: formData.get('description_uk')?.toString().trim()
+        };
+        if (!title.en || !title.uk) { setError('title', (window.i18n?.t('admin.table.needTitle') || 'Please enter a title')); throw new Error('validation'); }
+        if (!description.en || !description.uk) { setError('description', (window.i18n?.t('admin.table.needDesc') || 'Please enter a description')); throw new Error('validation'); }
+        body.set('title', JSON.stringify(title));
+        body.set('description', JSON.stringify(description));
+        const image = formData.get('image');
+        if (image && image.size) body.set('image', image, image.name || 'image');
+        return body;
+    }
 })();
 
 

@@ -76,10 +76,16 @@ app.post("/api/posts", upload.single("image"), (req, res) => {
       imageUrl = "/uploads/" + req.file.filename;
     }
 
+    // Accept localized JSON in title/description if provided
+    let title = req.body.title;
+    let description = req.body.description;
+    try { if (typeof title === 'string' && title.trim().startsWith('{')) title = JSON.parse(title); } catch {}
+    try { if (typeof description === 'string' && description.trim().startsWith('{')) description = JSON.parse(description); } catch {}
+
     const post = {
       id,
-      title: req.body.title,
-      description: req.body.description,
+      title,
+      description,
       imageUrl,
       createdAt: new Date().toISOString(),
     };
@@ -103,8 +109,12 @@ app.put("/api/posts/:id", upload.single("image"), (req, res) => {
       posts[idx].imageUrl = "/uploads/" + req.file.filename;
     }
 
-    posts[idx].title = req.body.title || posts[idx].title;
-    posts[idx].description = req.body.description || posts[idx].description;
+    let title = req.body.title;
+    let description = req.body.description;
+    try { if (typeof title === 'string' && title.trim().startsWith('{')) title = JSON.parse(title); } catch {}
+    try { if (typeof description === 'string' && description.trim().startsWith('{')) description = JSON.parse(description); } catch {}
+    posts[idx].title = title || posts[idx].title;
+    posts[idx].description = description || posts[idx].description;
     posts[idx].updatedAt = new Date().toISOString();
 
     savePosts(posts);
