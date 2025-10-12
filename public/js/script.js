@@ -159,18 +159,19 @@
 			frag.appendChild(fig);
         }
 
-        // Append a final "More photos" card linking to Google Drive
-        const moreCard = document.createElement('figure');
-        moreCard.className = 'card more-card';
-        const driveUrl = 'https://drive.google.com/drive/folders/your-folder-id-here';
-        moreCard.innerHTML = `
-            <a class="more-card-link" href="${driveUrl}" target="_blank" rel="noopener">
-                <span class="more-card-cta btn">More photos</span>
-            </a>
-        `;
-        frag.appendChild(moreCard);
 		grid.innerHTML = '';
 		grid.appendChild(frag);
+
+		// Add "More photos" button below the grid
+		const driveUrl = 'https://drive.google.com/drive/folders/your-folder-id-here';
+		let moreBtn = document.getElementById('morePhotosBtn');
+		if (!moreBtn) {
+			moreBtn = document.createElement('div');
+			moreBtn.id = 'morePhotosBtn';
+			moreBtn.className = 'more-photos-section';
+			grid.parentElement.appendChild(moreBtn);
+		}
+		moreBtn.innerHTML = `<a class="btn more-photos-btn" href="${driveUrl}" target="_blank" rel="noopener">More photos</a>`;
 
 		// Re-render on language change
 		window.addEventListener('i18n:languageChanged', () => {
@@ -260,19 +261,18 @@
 			if (!galleryItems.length) {
 				const figures = Array.from(document.querySelectorAll('#worksGrid figure.card'));
 				galleryItems = figures.map((f) => {
-					if (f.classList.contains('more-card')) {
-						return { src: '__more__', caption: 'More photos', isMore: true };
-					}
 					const im = f.querySelector('img');
 					const src = im?.getAttribute('data-full') || im?.src || '';
 					const caption = (f.querySelector('figcaption')?.textContent || im?.getAttribute('data-caption') || im?.alt || '').trim();
 					return { src, caption };
 				});
+				// Add "More photos" item to the end of gallery
+				galleryItems.push({ src: '__more__', caption: 'More photos', isMore: true });
 			}
 			const src = img.getAttribute('data-full') || img.src;
 			const caption = (fig?.querySelector('figcaption')?.textContent || img.getAttribute('data-caption') || img.alt || '').trim();
 			const index = Array.from(document.querySelectorAll('#worksGrid figure.card')).indexOf(fig);
-			openLightbox(fig.classList.contains('more-card') ? '__more__' : src, fig.classList.contains('more-card') ? 'More photos' : caption, index);
+			openLightbox(src, caption, index);
 		});
 
 		function showAt(i) {
