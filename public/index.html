@@ -8,6 +8,7 @@
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="css/styles.css">
+	<script src="https://kit.fontawesome.com/fbd858926c.js" crossorigin="anonymous"></script>
 </head>
 <body>
 	<header class="site-header">
@@ -50,8 +51,8 @@
 						</div>
 					</article>
 				</div>
-				<button class="control prev" aria-label="Previous slide">‹</button>
-				<button class="control next" aria-label="Next slide">›</button>
+				<button class="control prev" aria-label="Previous slide"><i class="fa-solid fa-chevron-left"></i></button>
+				<button class="control next" aria-label="Next slide"><i class="fa-solid fa-chevron-right"></i></button>
 				<div class="dots" role="tablist" aria-label="Slider pagination"></div>
 			</div>
 		</section>
@@ -137,12 +138,12 @@
 	<div id="lightbox" class="lightbox" aria-hidden="true" role="dialog" aria-label="Work preview">
 		<div class="lightbox-backdrop" data-close></div>
 		<div class="lightbox-dialog" role="document">
-			<button class="lightbox-close" aria-label="Close" data-close>✕</button>
+			<button class="lightbox-close" aria-label="Close" data-close><i class="fa-solid fa-xmark"></i></button>
 			<img id="lightboxImage" alt="Work image enlarged" />
 			<div id="lightboxCaption" class="lightbox-caption"></div>
 			<div class="lightbox-nav" aria-hidden="true">
-				<button class="lightbox-prev" aria-label="Previous">‹</button>
-				<button class="lightbox-next" aria-label="Next">›</button>
+				<button class="lightbox-prev" aria-label="Previous"><i class="fa-solid fa-chevron-left"></i></button>
+				<button class="lightbox-next" aria-label="Next"><i class="fa-solid fa-chevron-right"></i></button>
 			</div>
 		</div>
 	</div>
@@ -151,3 +152,5 @@
 	<script src="js/script.js"></script>
 </body>
 </html>
+
+

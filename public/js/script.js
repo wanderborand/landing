@@ -171,7 +171,7 @@
 			moreBtn.className = 'more-photos-section';
 			grid.parentElement.appendChild(moreBtn);
 		}
-		moreBtn.innerHTML = `<a class="btn more-photos-btn" href="${driveUrl}" target="_blank" rel="noopener">More photos</a>`;
+		moreBtn.innerHTML = `<a class="a more-photos-a" href="${driveUrl}" target="_blank" rel="noopener">More photos</a>`;
 
 		// Re-render on language change
 		window.addEventListener('i18n:languageChanged', () => {
