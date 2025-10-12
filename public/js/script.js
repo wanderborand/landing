@@ -86,6 +86,33 @@
 
 		updateDots();
 		startAutoplay();
+
+		// Touch swipe support for mobile
+		let touchStartX = 0;
+		let touchStartY = 0;
+		let touchStartTime = 0;
+		const THRESHOLD_X = 40; // min horizontal movement in px
+		const LIMIT_Y = 60;     // max vertical drift in px
+		const TIME_LIMIT = 600; // max gesture time in ms
+
+		slider.addEventListener('touchstart', (e) => {
+			const t = e.changedTouches && e.changedTouches[0];
+			if (!t) return;
+			touchStartX = t.clientX;
+			touchStartY = t.clientY;
+			touchStartTime = Date.now();
+		}, { passive: true });
+
+		slider.addEventListener('touchend', (e) => {
+			const t = e.changedTouches && e.changedTouches[0];
+			if (!t) return;
+			const dx = t.clientX - touchStartX;
+			const dy = Math.abs(t.clientY - touchStartY);
+			const dt = Date.now() - touchStartTime;
+			if (dt <= TIME_LIMIT && Math.abs(dx) >= THRESHOLD_X && dy <= LIMIT_Y) {
+				if (dx < 0) next(); else prev();
+			}
+		}, { passive: true });
 	}
 
 	// Footer year
@@ -120,48 +147,157 @@
 			return;
 		}
 		if (emptyEl) emptyEl.style.display = 'none';
-		const frag = document.createDocumentFragment();
+        const frag = document.createDocumentFragment();
+        const lang = (window.i18n?.getLanguage && window.i18n.getLanguage()) || 'en';
 		for (const p of posts) {
 			const fig = document.createElement('figure');
 			fig.className = 'card';
 			fig.innerHTML = `
-				<img src="${p.imageUrl}" alt="${escapeHtml(p.title)}" data-full="${p.imageUrl}">
-				<figcaption>${escapeHtml(p.description)}</figcaption>
+				<img src="${p.imageUrl}" alt="${escapeHtml(selectLang(p.title, lang))}" data-full="${p.imageUrl}" data-caption="${escapeHtml(selectLang(p.description, lang))}">
+				<figcaption>${escapeHtml(selectLang(p.description, lang))}</figcaption>
 			`;
 			frag.appendChild(fig);
-		}
+        }
+
+        // Append a final "More photos" card linking to Google Drive
+        const moreCard = document.createElement('figure');
+        moreCard.className = 'card more-card';
+        const driveUrl = 'https://drive.google.com/drive/folders/your-folder-id-here';
+        moreCard.innerHTML = `
+            <a class="more-card-link" href="${driveUrl}" target="_blank" rel="noopener">
+                <span class="more-card-cta btn">More photos</span>
+            </a>
+        `;
+        frag.appendChild(moreCard);
 		grid.innerHTML = '';
 		grid.appendChild(frag);
+
+		// Re-render on language change
+		window.addEventListener('i18n:languageChanged', () => {
+			// Force re-render captions/alt using current cached posts
+			const currentLang = (window.i18n?.getLanguage && window.i18n.getLanguage()) || 'en';
+			Array.from(grid.querySelectorAll('figure.card:not(.more-card)')).forEach((fig, idx) => {
+				const p = posts[idx];
+				if (!p) return;
+				const img = fig.querySelector('img');
+				const cap = fig.querySelector('figcaption');
+				if (img) img.alt = escapeHtml(selectLang(p.title, currentLang));
+				if (cap) cap.textContent = selectLang(p.description, currentLang);
+			});
+		});
 
 		// Lightbox setup
 		const lightbox = document.getElementById('lightbox');
 		const imgEl = document.getElementById('lightboxImage');
 		const capEl = document.getElementById('lightboxCaption');
-		function openLightbox(src, caption) {
-			imgEl.src = src;
-			capEl.textContent = caption || '';
+		const lbPrev = document.querySelector('.lightbox-prev');
+		const lbNext = document.querySelector('.lightbox-next');
+		let galleryItems = [];
+		let galleryIndex = -1;
+
+		function renderMorePhotosPanel() {
+			// Видаляємо попередню панель (якщо є)
+			const existing = lightbox.querySelector('.lightbox-panel');
+			if (existing) existing.remove();
+		
+			// Сховати стандартне фото та підпис
+			imgEl.style.display = 'none';
+			capEl.style.display = 'none';
+			capEl.innerHTML = '';
+		
+			// Створюємо панель та додаємо її в .lightbox-dialog (щоб покрити весь діалог)
+			const panel = document.createElement('div');
+			panel.className = 'lightbox-panel';
+			panel.innerHTML = `
+				<h4>More photos</h4>
+				<p>Open the full gallery on Google Drive.</p>
+				<a class="btn" target="_blank" rel="noopener" href="https://drive.google.com/drive/folders/your-folder-id-here">Open</a>
+			`;
+			const dialog = lightbox.querySelector('.lightbox-dialog');
+			dialog.appendChild(panel);
+		}
+
+		function openLightbox(src, caption, index = -1) {
+			// При відкритті звичайного фото — видаляємо панель (якщо була) і показуємо img+caption
+			const existing = lightbox.querySelector('.lightbox-panel');
+			if (src === '__more__') {
+				renderMorePhotosPanel();
+			} else {
+				if (existing) existing.remove();
+				imgEl.style.display = '';
+				capEl.style.display = '';
+				imgEl.src = src;
+				capEl.textContent = caption || '';
+			}
+			galleryIndex = index;
 			lightbox.setAttribute('aria-hidden', 'false');
 		}
 		function closeLightbox() {
 			lightbox.setAttribute('aria-hidden', 'true');
+			// Очистити і повернути стан до початкового
 			imgEl.src = '';
+			imgEl.style.display = '';
 			capEl.textContent = '';
+			capEl.style.display = '';
+			const panel = lightbox.querySelector('.lightbox-panel');
+			if (panel) panel.remove();
 		}
 		lightbox?.addEventListener('click', (e) => {
 			if (e.target.hasAttribute('data-close')) closeLightbox();
 		});
 		document.addEventListener('keydown', (e) => {
 			if (e.key === 'Escape') closeLightbox();
+			if (lightbox.getAttribute('aria-hidden') === 'false') {
+				if (e.key === 'ArrowLeft') showAt(galleryIndex - 1);
+				if (e.key === 'ArrowRight') showAt(galleryIndex + 1);
+			}
 		});
-		document.getElementById('worksGrid')?.addEventListener('click', (e) => {
+			document.getElementById('worksGrid')?.addEventListener('click', (e) => {
 			const img = e.target.closest('img');
 			if (!img) return;
+			const fig = img.closest('figure');
+			// Build gallery list on first open
+			if (!galleryItems.length) {
+				const figures = Array.from(document.querySelectorAll('#worksGrid figure.card'));
+				galleryItems = figures.map((f) => {
+					if (f.classList.contains('more-card')) {
+						return { src: '__more__', caption: 'More photos', isMore: true };
+					}
+					const im = f.querySelector('img');
+					const src = im?.getAttribute('data-full') || im?.src || '';
+					const caption = (f.querySelector('figcaption')?.textContent || im?.getAttribute('data-caption') || im?.alt || '').trim();
+					return { src, caption };
+				});
+			}
 			const src = img.getAttribute('data-full') || img.src;
-			const caption = img.nextElementSibling?.textContent || '';
-			openLightbox(src, caption);
+			const caption = (fig?.querySelector('figcaption')?.textContent || img.getAttribute('data-caption') || img.alt || '').trim();
+			const index = Array.from(document.querySelectorAll('#worksGrid figure.card')).indexOf(fig);
+			openLightbox(fig.classList.contains('more-card') ? '__more__' : src, fig.classList.contains('more-card') ? 'More photos' : caption, index);
 		});
 
-		function escapeHtml(str) {
+		function showAt(i) {
+			if (!galleryItems.length) return;
+			const total = galleryItems.length;
+			galleryIndex = (i + total) % total;
+			const item = galleryItems[galleryIndex];
+			if (item.isMore) {
+				openLightbox('__more__', 'More photos', galleryIndex);
+			} else {
+				openLightbox(item.src, item.caption, galleryIndex);
+			}
+		}
+
+		lbPrev?.addEventListener('click', () => showAt(galleryIndex - 1));
+		lbNext?.addEventListener('click', () => showAt(galleryIndex + 1));
+
+        function selectLang(value, lang) {
+            if (value && typeof value === 'object' && (value.en || value.uk)) {
+                return value[lang] || value.en || value.uk || '';
+            }
+            return value ?? '';
+        }
+
+        function escapeHtml(str) {
 			return String(str)
 				.replace(/&/g, '&amp;')
 				.replace(/</g, '&lt;')
