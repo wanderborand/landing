@@ -159,18 +159,21 @@
 			frag.appendChild(fig);
         }
 
-        // Append a final "More photos" card linking to Google Drive
-        const moreCard = document.createElement('figure');
-        moreCard.className = 'card more-card';
-        const driveUrl = 'https://drive.google.com/drive/folders/your-folder-id-here';
-        moreCard.innerHTML = `
-            <a class="more-card-link" href="${driveUrl}" target="_blank" rel="noopener">
-                <span class="more-card-cta btn">More photos</span>
-            </a>
-        `;
-        frag.appendChild(moreCard);
 		grid.innerHTML = '';
 		grid.appendChild(frag);
+
+		// Add "More photos" button below the grid
+		const driveUrl = 'https://drive.google.com/drive/folders/your-folder-id-here';
+		let moreBtn = document.getElementById('morePhotosBtn');
+		if (!moreBtn) {
+			moreBtn = document.createElement('div');
+			moreBtn.id = 'morePhotosBtn';
+			moreBtn.className = 'more-photos-section';
+			grid.parentElement.appendChild(moreBtn);
+		}
+		const currentLang = (window.i18n?.getLanguage && window.i18n.getLanguage()) || 'en';
+		const morePhotosText = (window.i18n?.t && window.i18n.t('works.morePhotos')) || 'More photos';
+		moreBtn.innerHTML = `<a class="a more-photos-a" href="${driveUrl}" target="_blank" rel="noopener">${morePhotosText}</a>`;
 
 		// Re-render on language change
 		window.addEventListener('i18n:languageChanged', () => {
@@ -184,6 +187,14 @@
 				if (img) img.alt = escapeHtml(selectLang(p.title, currentLang));
 				if (cap) cap.textContent = selectLang(p.description, currentLang);
 			});
+			
+			// Update "More photos" button text
+			const moreBtn = document.getElementById('morePhotosBtn');
+			if (moreBtn) {
+				const morePhotosText = (window.i18n?.t && window.i18n.t('works.morePhotos')) || 'More photos';
+				const link = moreBtn.querySelector('a');
+				if (link) link.textContent = morePhotosText;
+			}
 		});
 
 		// Lightbox setup
@@ -208,10 +219,17 @@
 			// Створюємо панель та додаємо її в .lightbox-dialog (щоб покрити весь діалог)
 			const panel = document.createElement('div');
 			panel.className = 'lightbox-panel';
+			
+			// Get localized text
+			const currentLang = (window.i18n?.getLanguage && window.i18n.getLanguage()) || 'en';
+			const title = (window.i18n?.t && window.i18n.t('works.morePhotos')) || 'More photos';
+			const desc = (window.i18n?.t && window.i18n.t('works.morePhotosDesc')) || 'Open the full gallery on Google Drive.';
+			const btnText = (window.i18n?.t && window.i18n.t('works.morePhotosBtn')) || 'Open';
+			
 			panel.innerHTML = `
-				<h4>More photos</h4>
-				<p>Open the full gallery on Google Drive.</p>
-				<a class="btn" target="_blank" rel="noopener" href="https://drive.google.com/drive/folders/your-folder-id-here">Open</a>
+				<h4>${title}</h4>
+				<p>${desc}</p>
+				<a class="btn" target="_blank" rel="noopener" href="https://drive.google.com/drive/folders/your-folder-id-here">${btnText}</a>
 			`;
 			const dialog = lightbox.querySelector('.lightbox-dialog');
 			dialog.appendChild(panel);
@@ -260,19 +278,20 @@
 			if (!galleryItems.length) {
 				const figures = Array.from(document.querySelectorAll('#worksGrid figure.card'));
 				galleryItems = figures.map((f) => {
-					if (f.classList.contains('more-card')) {
-						return { src: '__more__', caption: 'More photos', isMore: true };
-					}
 					const im = f.querySelector('img');
 					const src = im?.getAttribute('data-full') || im?.src || '';
 					const caption = (f.querySelector('figcaption')?.textContent || im?.getAttribute('data-caption') || im?.alt || '').trim();
 					return { src, caption };
 				});
+				// Add "More photos" item to the end of gallery
+				const currentLang = (window.i18n?.getLanguage && window.i18n.getLanguage()) || 'en';
+				const morePhotosCaption = (window.i18n?.t && window.i18n.t('works.morePhotos')) || 'More photos';
+				galleryItems.push({ src: '__more__', caption: morePhotosCaption, isMore: true });
 			}
 			const src = img.getAttribute('data-full') || img.src;
 			const caption = (fig?.querySelector('figcaption')?.textContent || img.getAttribute('data-caption') || img.alt || '').trim();
 			const index = Array.from(document.querySelectorAll('#worksGrid figure.card')).indexOf(fig);
-			openLightbox(fig.classList.contains('more-card') ? '__more__' : src, fig.classList.contains('more-card') ? 'More photos' : caption, index);
+			openLightbox(src, caption, index);
 		});
 
 		function showAt(i) {
@@ -281,7 +300,9 @@
 			galleryIndex = (i + total) % total;
 			const item = galleryItems[galleryIndex];
 			if (item.isMore) {
-				openLightbox('__more__', 'More photos', galleryIndex);
+				const currentLang = (window.i18n?.getLanguage && window.i18n.getLanguage()) || 'en';
+				const morePhotosCaption = (window.i18n?.t && window.i18n.t('works.morePhotos')) || 'More photos';
+				openLightbox('__more__', morePhotosCaption, galleryIndex);
 			} else {
 				openLightbox(item.src, item.caption, galleryIndex);
 			}
