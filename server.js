@@ -92,6 +92,12 @@ app.post("/api/posts", upload.single("image"), (req, res) => {
 
     posts.unshift(post);
     savePosts(posts);
+    
+    // Server log for post creation
+    const timestamp = new Date().toISOString();
+    const titleText = typeof title === 'object' ? title.en || title.uk || 'Untitled' : title || 'Untitled';
+    console.log(`📝 ADMIN: Post created [${timestamp}] ID: ${id}, Title: "${titleText}"`);
+    
     res.json(post);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -118,6 +124,12 @@ app.put("/api/posts/:id", upload.single("image"), (req, res) => {
     posts[idx].updatedAt = new Date().toISOString();
 
     savePosts(posts);
+    
+    // Server log for post update
+    const timestamp = new Date().toISOString();
+    const titleText = typeof posts[idx].title === 'object' ? posts[idx].title.en || posts[idx].title.uk || 'Untitled' : posts[idx].title || 'Untitled';
+    console.log(`📝 ADMIN: Post updated [${timestamp}] ID: ${req.params.id}, Title: "${titleText}"`);
+    
     res.json(posts[idx]);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -130,6 +142,11 @@ app.delete("/api/posts/:id", (req, res) => {
     const posts = loadPosts();
     const idx = posts.findIndex((p) => p.id === req.params.id);
     if (idx === -1) return res.status(404).json({ error: "Not found" });
+
+    // Server log for post deletion (before deletion)
+    const timestamp = new Date().toISOString();
+    const titleText = typeof posts[idx].title === 'object' ? posts[idx].title.en || posts[idx].title.uk || 'Untitled' : posts[idx].title || 'Untitled';
+    console.log(`📝 ADMIN: Post deleted [${timestamp}] ID: ${req.params.id}, Title: "${titleText}"`);
 
     // видаляємо зображення якщо є
     if (posts[idx].imageUrl) {
