@@ -261,7 +261,7 @@
 			if (panel) panel.remove();
 		}
 		lightbox?.addEventListener('click', (e) => {
-			if (e.target.hasAttribute('data-close')) closeLightbox();
+			if (e.target.hasAttribute('data-close') || e.target.closest('[data-close]')) closeLightbox();
 		});
 		document.addEventListener('keydown', (e) => {
 			if (e.key === 'Escape') closeLightbox();
